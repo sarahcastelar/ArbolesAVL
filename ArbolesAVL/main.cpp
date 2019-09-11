@@ -37,7 +37,7 @@ int main() {
 			}
 			a.printRecorridos(raiz);
 
-			cout << "Ingrese cantidad de nodos a eliminar: " << endl;
+			cout << "\nIngrese cantidad de nodos a eliminar: " << endl;
 			cin >> n;
 			for (int i = 0; i < n; i++) {
 				cout << "Ingrese llave a eliminar: " << endl;
@@ -68,14 +68,15 @@ int main() {
 			}
 			raiz = a.readInsertion();
 
-			/*cout << "Ingrese cantidad de nodos a eliminar: " << endl;
+			cout << "Ingrese cantidad de nodos a eliminar: " << endl;
 			cin >> n;
 			for (int i = 0; i < n; i++) {
 				cout << "Ingrese llave a eliminar: " << endl;
 				cin >> llave;
-				raiz = a.deleteNode(raiz, llave);
+				raiz = a.deleteNodeF(raiz, llave);
 			}
-			a.readInsertion();*/
+			a.printRecorridos(raiz);
+
 		}
 
 	} while (resp != 3);

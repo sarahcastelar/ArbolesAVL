@@ -7,12 +7,16 @@ struct AVLNode {
 	AVLNode * hijoIzq;
 	AVLNode * hijoDer;
 	int altura;
+	int indice;
 };
 
 
 class arbol {
-public:
 
+private:
+
+
+public:
 
 	int max(int a, int b) {
 		return (a > b) ? a : b;
@@ -50,7 +54,6 @@ public:
 		if (!es_vacio(t))// !es_vacio(t)
 			t->altura = max(altura((t)->hijoIzq), altura((t)->hijoDer)) + 1;
 	}
-
 
 	AVLNode* rotar_s(AVLNode* t, bool izq) {
 		AVLNode* t1 = (AVLNode*)malloc(sizeof(AVLNode));
@@ -98,10 +101,10 @@ public:
 			}
 			else {
 				return t;//cuando no hay balanceo
+				cout << "no hubo balanceoo" << endl;
 			}
 		}
 	}
-
 
 	AVLNode* insert(AVLNode* t, int x) {
 		if ( t == NULL) 
@@ -117,8 +120,60 @@ public:
 		}
 	}
 
+	AVLNode* deleteNode(AVLNode* raiz, int x) {
+		if (raiz == NULL) //si no existe, se devuelve.
+			return raiz;
+		if (x < raiz->dato)
+			raiz->hijoIzq = deleteNode(raiz->hijoIzq, x);
+		else if (x > raiz->dato)
+			raiz->hijoDer = deleteNode(raiz->hijoDer, x);
+		else { //coincidencia
+			if ((raiz->hijoIzq == NULL) || (raiz->hijoDer == NULL)) { // nodo  hoja o con 1 hijo.
+				AVLNode* temp = raiz->hijoIzq ? raiz->hijoIzq : raiz->hijoDer;
+
+				// nodo sin hijos
+				if (temp == NULL) {
+					//temp = raiz;
+					//raiz = NULL;
+					free(raiz);
+					raiz = NULL;
+				}
+				else // Nodo tiene 1 hijo
+					*raiz = *temp;
+				free(temp);
+			}
+			else { //NODO CON DOS HIJOS
+				cout << "1. Predecesor 2. Sucesor \n Ingrese opcion: " << endl;
+				int n;
+				cin >> n;
+				while (n < 1 || n > 2) {
+					cout << "opcion invalida. Ingrese otra vez: " << endl;
+					cin >> n;
+				}
+				if (n == 1) {
+					AVLNode* temp = maxValueNode(raiz->hijoIzq);
+					raiz->dato = temp->dato;
+					raiz->hijoIzq = deleteNode(raiz->hijoIzq, temp->dato);
+				}
+				else if (n == 2) {
+					AVLNode* temp = minValueNode(raiz->hijoDer);
+					raiz->dato = temp->dato;
+					raiz->hijoDer = deleteNode(raiz->hijoDer, temp->dato);
+				}
+			}
+		}
+
+		// si el arbol solo tiene un nodo
+		if (raiz == NULL)
+			return raiz;
+
+		actualizar_altura(raiz);
+		raiz = balancear(raiz);
+		return raiz;
+	}
+
 	AVLNode* insertF(AVLNode* raiz, int x) {
-		ofstream fileC("avl.dat", ios::out | ios::app | ios::binary);
+		ofstream fileC("avl.dat", ios::out | ios::binary);
 		if (!fileC) {
 			cout << "Error de apertura en el archivo. " << endl;
 			return NULL;
@@ -135,73 +190,36 @@ public:
 	}
 
 	AVLNode* deleteNodeF(AVLNode* raiz, int x) {
-		if (raiz == NULL) //si no existe, se devuelve.
-			return raiz;
-		if (x < raiz->dato)
-			raiz->hijoIzq = deleteNode(raiz->hijoIzq, x);
-		else if (x > raiz->dato)
-			raiz->hijoDer = deleteNode(raiz->hijoDer, x);
-
-		//SI ES LA RAIZ / lo encuentra
-		else
-		{
-			// nodo con 1 hijo o sin hijo
-			if ((raiz->hijoIzq == NULL) || (raiz->hijoDer == NULL))
-			{
-				AVLNode* temp = raiz->hijoIzq ? raiz->hijoIzq : raiz->hijoDer;
-
-				// nodo sin hijos
-				if (temp == NULL) {
-					temp = raiz;
-					//padreNodo(raiz);
-					raiz = NULL;
-				}
-				else { // Nodo tiene 1 hijo
-					*raiz = *temp;
-					//padreNodo(raiz);
-				}
-				free(temp);
-			}
-			else { ///NODO CON DOS HIJOS, agarramos el sucesor mas peque en el lado derecho
-				//padreNodo(raiz);
-				AVLNode* temp = minValueNode(raiz->hijoDer);
-				raiz->dato = temp->dato;
-				raiz->hijoDer = deleteNode(raiz->hijoDer, temp->dato);
-			}
+		ofstream fileC("avl.dat", ios::out | ios::binary);
+		if (!fileC) {
+			cout << "Error de apertura en el archivo. " << endl;
+			return NULL;
 		}
+		else {
+			fileC.seekp(0, ios::end);
+			AVLNode* tree = deleteNode(raiz, x);
+			fileC.write(reinterpret_cast<const char*>(&tree), sizeof(tree));
+			fileC.close();
+			return tree;
+		}
+		cout << "No se pudo borrar el nodo en el archivo. " << endl;
+		return NULL;
+	}
+	
+	AVLNode* minValueNode(AVLNode* t) { //entrega el sucesor
+		AVLNode* actual = t;
+		while (actual->hijoIzq != NULL)
+			actual = actual->hijoIzq;
 
-		// si el arbol solo tiene un nodo
-		if (raiz == NULL) 
-			return raiz;
-			
-
-		actualizar_altura(raiz);
-		raiz = balancear(raiz);
-
-		//padreNodo(raiz);
-		return raiz;
+		return actual;
 	}
 
-	 void padreNodo(AVLNode* t) { //si el hijo de un nodo es igual a t, que lo ponga null.
-		//t es el nodo que eliminamos.
-		 int cont = 1;
-		if (!es_vacio(t)) {
-			cout << "ajaa pues " << t->dato << " ";
-			if ((t->hijoIzq != t) || (t->hijoDer != t)) {
-				cout << "entra " << cont << " vez. " << endl;
-				cont++;
-				//entra solamente si es el padre de ese nodo.
-				if ((t->hijoIzq) == t)
-					t->hijoIzq = NULL;
-				else
-					t->hijoDer = NULL;
-			}
-			preOrder(t->hijoIzq);
-			preOrder(t->hijoDer);
-		}
-		//actualizar_altura(t);
-		//t = balancear(t);
-		//return t;
+	AVLNode* maxValueNode(AVLNode* t) {//entrega predecesor
+		AVLNode* actual = t;
+		while (actual->hijoDer != NULL)
+			actual = actual->hijoDer;
+
+		return actual;
 	}
 
 	AVLNode* readInsertion() {
@@ -214,61 +232,22 @@ public:
 		AVLNode* tree;
 		fileC.read(reinterpret_cast<char*>(&tree), sizeof(tree));
 
-		while (!fileC.eof()) {
+		/*while (!fileC.eof()) {
 			fileC.read(reinterpret_cast<char*>(&tree), sizeof(tree));
-		}
+		}*/
 		printRecorridos(tree);
-		cout << endl << tree->dato << endl;
 		return tree;
 	}
 
-	AVLNode* minValueNode(AVLNode* t) { //entrega el sucesor
-		 AVLNode* actual = t;
-		while (actual->hijoIzq != NULL)
-			actual = actual->hijoIzq;
-
-		return actual;
-	}
-
-	AVLNode* deleteNode(AVLNode * raiz, int x) {
-		if (raiz == NULL) //si no existe, se devuelve.
-			return raiz;
-		if (x < raiz->dato)
-			raiz->hijoIzq = deleteNode(raiz->hijoIzq, x);
-		else if (x > raiz->dato)
-			raiz->hijoDer = deleteNode(raiz->hijoDer, x);
-
-		//SI ES LA RAIZ / lo encuentra
-		else
-		{
-			// nodo con 1 hijo o sin hijo
-			if ((raiz->hijoIzq == NULL) || (raiz->hijoDer == NULL))
-			{
-				 AVLNode* temp = raiz->hijoIzq ? raiz->hijoIzq : raiz->hijoDer;
-
-				// nodo sin hijos
-				if (temp == NULL) {
-					temp = raiz;
-					raiz = NULL;
-				}
-				else // Nodo tiene 1 hijo
-					*raiz = *temp; 
-				free(temp);
-			} else { ///NODO CON DOS HIJOS, agarramos el sucesor mas peque en el lado derecho
-				AVLNode* temp = minValueNode(raiz->hijoDer);
-				raiz->dato = temp->dato;
-				raiz->hijoDer = deleteNode(raiz->hijoDer, temp->dato);
-			}
-		}
-
-		// si el arbol solo tiene un nodo
-		if (raiz == NULL)
-			return raiz;
-
-		actualizar_altura(raiz);
-		raiz = balancear(raiz);
-
-		return raiz;
+	void printRecorridos(AVLNode* raiz) {
+		cout << "	Tres Recorridos: " << endl;
+		cout << "Pre Orden: ";
+		preOrder(raiz);
+		cout << "\nEn Orden: ";
+		inOrder(raiz);
+		cout << "\nPost Orden: ";
+		postOrder(raiz);
+		cout << endl;
 	}
 
 	void preOrder(AVLNode* t) {
@@ -295,15 +274,7 @@ public:
 		}
 	}
 
-	void printRecorridos(AVLNode* raiz) {
-		cout << "Tres Recorridos: " << endl;
-		cout << "Pre Orden: ";
-		preOrder(raiz);
-		cout << "\nEn Orden: ";
-		inOrder(raiz);
-		cout << "\nPost Orden: ";
-		postOrder(raiz);
-	}
+	
 };
 
 
